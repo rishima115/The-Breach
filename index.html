@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Breach</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Landing Screen -->
+    <div id="landing-page">
+
+        <h1>The Breach</h1>
+
+        <h2>A Digital Story</h2>
+
+        <p>
+            Recover my digital identity by investigating a fictional cyber attack.
+        </p>
+
+        <button id="start-btn">
+            Start Investigation
+        </button>
+
+    </div>
+
+    <!-- Boot Screen -->
+    <div id="boot-screen">
+
+        <pre id="terminal"></pre>
+
+    </div>
+    <div id="login-window">
+
+    <div class="window-header">
+
+    <span>AUTHENTICATION</span>
+
+    <button id="close-login">X</button>
+
+</div>
+    <div class="window-content">
+
+        <h2>Investigator Login</h2>
+
+        <input
+            type="text"
+            id="username"
+            placeholder="Username">
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Password">
+
+        <button id="login-btn">
+
+            Login
+
+        </button>
+
+        <p id="login-result"></p>
+
+    </div>
+
+</div>
+
+    <!-- Desktop -->
+    <div id="desktop" style="display:none;">
+
+        <div class="desktop-header">
+
+    <h2>THE BREACH OS</h2>
+
+    <div class="desktop-status">
+
+        <div>Recovery: <span id="progress">0%</span></div>
+
+        <div class="progress-bar">
+
+            <div id="progress-fill"></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+        </div>
+
+        <div class="desktop-icons">
+
+            <div class="icon" id="case-icon">
+
+                📂
+
+                <p>Case Files</p>
+
+            </div>
+
+            <div class="icon" id="evidence-icon">
+
+                📁
+
+                <p>Evidence Locker</p>
+
+            </div>
+
+            <div class="icon" id="terminal-icon">
+
+                💻
+
+                <p>Terminal</p>
+
+            </div>
+
+            <div class="icon" id="memory-icon">
+
+                🧠
+
+                <p>Memory Fragments</p>
+
+            </div>
+
+            <div class="icon" id="network-icon">
+
+                🌐
+
+                <p>Network</p>
+
+            </div>
+            <div class="icon" id="vault-icon">
+
+                🔐
+
+               <p>Password Vault</p>
+
+            </div>
+            <div class="icon" id="email-icon">
+
+               📧
+
+               <p>Email</p>
+
+            </div>
+
+            resumeIcon.innerHTML=`
+        📄
+        <p>Resume.pdf</p>
+        `;
+        
+        resumeWindow.querySelector(".window-content").innerHTML=`
+
+        <h2>Resume</h2>
+
+        <hr>
+
+        <h3>Rishima Sharma</h3>
+
+        <p>B.Tech Cyber Security & Digital Forensics</p>
+
+        <h3>Skills</h3>
+
+        <ul>
+
+        <li>Java</li>
+
+        <li>Python</li>
+
+        <li>C++</li>
+
+        <li>SQL</li>
+
+        <li>JavaScript</li>
+
+        <li>AWS</li>
+
+        <li>Cyber Security</li>
+
+        </ul>
+
+        <h3>Projects</h3>
+
+        <ul>
+
+        <li>The Breach</li>
+
+        <li>EncryptSafe</li>
+
+        <li>Packet Sniffer</li>
+
+        </ul>
+
+        `;        
+
+        </div>
+
+    </div>
+
+    <!-- Case Window -->
+    <div id="case-window">
+
+        <div class="window-header">
+
+            <span>CASE FILES</span>
+
+            <button id="close-case">X</button>
+
+        </div>
+
+        <div class="window-content">
+
+            <h2>Incident Report</h2>
+
+            <p><strong>Case ID:</strong> BR-115</p>
+
+            <p><strong>Status:</strong> ACTIVE</p>
+
+            <p><strong>Date:</strong> 12 July 2026</p>
+
+            <p><strong>Recovery Progress:</strong>
+                <span id="case-progress">0%</span>
+            </p>
+
+            <hr>
+
+            <h3>Mission Objective</h3>
+
+            <p>
+
+                Recover the missing digital identity by investigating security
+                logs, network activity and encrypted evidence.
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Evidence Locker -->
+    <div id="evidence-window">
+
+        <div class="window-header">
+
+            <span>EVIDENCE LOCKER</span>
+
+            <button id="close-evidence">X</button>
+
+        </div>
+
+        <div class="evidence-grid">
+
+            <div class="evidence-item" id="log-file">
+
+                📄
+
+                <p>Security Log</p>
+
+            </div>
+
+            <div class="evidence-item" id="usb-file">
+
+    💾
+
+    <p>USB Drive</p>
+
+</div>
+            <div class="evidence-item" id="photo-file">
+
+📷
+
+<p>Security Photo</p>
+
+</div>
+            <div class="evidence-item" id="note-file">
+
+🔑
+
+<p>Password Note</p>
+
+</div>
+
+        </div>
+
+    </div>
+
+    <!-- Terminal Window -->
+    <div id="terminal-window">
+
+        <div class="window-header">
+
+            <span>TERMINAL</span>
+
+            <button id="close-terminal">X</button>
+
+        </div>
+
+        <div id="terminal-output">
+
+            Welcome Investigator...<br>
+            Type <span class="green">help</span> to begin.
+
+        </div>
+
+        <input
+            id="terminal-input"
+            type="text"
+            placeholder="Enter command..."
+            autocomplete="off">
+
+    </div>
+
+    <!-- Security Log Window -->
+    <div id="log-window">
+
+        <div class="window-header">
+
+            <span>SECURITY LOG</span>
+
+            <button id="close-log">X</button>
+
+        </div>
+
+        <div class="log-content">
+
+<pre>
+08:31  User login successful
+
+08:34  USB Device Connected
+
+08:35  powershell.exe started
+
+08:36  invoice.pdf.exe executed
+
+08:37  Outbound connection established
+
+08:39  Files encrypted
+</pre>
+
+            <hr>
+
+            <h3>Question</h3>
+
+            <p>Which event most likely started the attack?</p>
+
+            <button class="answer" data-answer="login">
+                User Login
+            </button>
+
+            <button class="answer" data-answer="usb">
+                USB Device Connected
+            </button>
+
+            <button class="answer" data-answer="outbound">
+                Outbound Connection
+            </button>
+
+            <button class="answer" data-answer="encryption">
+                File Encryption
+            </button>
+
+            <p id="result"></p>
+
+        </div>
+
+    </div>
+
+    <!-- Memory Window -->
+    <div id="memory-window">
+
+        <div class="window-header">
+
+            <span>MEMORY FRAGMENTS</span>
+
+            <button id="close-memory">X</button>
+
+        </div>
+
+        <div class="memory-content">
+
+            <h2>Recovered Memories</h2>
+
+            <div id="memory-list">
+
+                <p>No memories recovered yet.</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Network Window -->
+    <div id="network-window">
+
+        <div class="window-header">
+
+            <span>NETWORK MONITOR</span>
+
+            <button id="close-network">X</button>
+
+        </div>
+
+        <div class="network-content">
+
+            <h2>Corporate Network</h2>
+
+            <div class="network-map">
+
+                <div class="device" id="router">
+
+                    🌐
+
+                    <p>Firewall</p>
+
+                </div>
+
+                <div class="device" id="laptop">
+
+                    💻
+
+                    <p>Employee PC</p>
+
+                </div>
+
+                <div class="device" id="server">
+
+                    🖥️
+
+                    <p>File Server</p>
+
+                </div>
+
+                <div class="device" id="attacker">
+
+                    ⚠️
+
+                    <p>Unknown Device</p>
+
+                </div>
+
+            </div>
+
+            <div id="device-info">
+
+                Select a device to inspect.
+
+            </div>
+
+            <hr>
+
+            <h3>Question</h3>
+
+            <p>
+
+                Which device appears to have initiated the compromise?
+
+            </p>
+
+            <button id="answer-network">
+
+                Employee PC
+
+            </button>
+
+            <p id="network-result"></p>
+
+        </div>
+
+    </div>
+
+    <!-- Resume Window -->
+    <div id="resume-window">
+
+        <div class="window-header">
+
+            <span>RESUME</span>
+
+            <button id="close-resume">X</button>
+
+        </div>
+
+        <div class="window-content">
+
+            <div id="resume-content">
+
+    <h2>🔒 Resume Locked</h2>
+
+    <p>
+    Recover all memory fragments to unlock your resume.
+    </p>
+
+</div>
+
+        
+
+    </div>
+    <div id="vault-window">
+
+    <div class="window-header">
+
+        <span>PASSWORD VAULT</span>
+
+        <button id="close-vault">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>Vault Authentication</h2>
+
+        <p>
+
+            Crack the password using the clue.
+
+        </p>
+
+        <hr>
+
+        <p>
+
+            Clue:
+            <br><br>
+
+            My favourite programming language.
+
+        </p>
+
+        <input
+        id="password-input"
+        type="text"
+        placeholder="Enter password">
+
+        <button id="unlock-password">
+
+            Unlock
+
+        </button>
+
+        <p id="vault-result"></p>
+
+    </div>
+
+</div>
+<div id="email-window">
+
+    <div class="window-header">
+
+        <span>EMAIL INBOX</span>
+
+        <button id="close-email">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>Incoming Email</h2>
+
+        <hr>
+
+        <p><strong>From:</strong> support@micr0soft-security.com</p>
+
+        <p><strong>Subject:</strong> URGENT! Verify your account immediately!</p>
+
+        <br>
+
+        <p>
+
+        Dear User,
+
+        <br><br>
+
+        Your account has been suspended.
+
+        Click below immediately to restore access.
+
+        <br><br>
+
+        http://micr0soft-security-login.com
+
+        </p>
+
+        <hr>
+
+        <h3>Question</h3>
+
+        <p>
+
+        What indicates this is a phishing email?
+
+        </p>
+
+        <button class="phish-answer" data-answer="sender">
+
+            Suspicious sender address
+
+        </button>
+
+        <button class="phish-answer" data-answer="nothing">
+
+            Nothing looks suspicious
+
+        </button>
+
+        <button class="phish-answer" data-answer="safe">
+
+            It is completely safe
+
+        </button>
+
+        <p id="email-result"></p>
+
+    </div>
+
+</div>
+<div id="usb-window">
+
+    <div class="window-header">
+
+        <span>USB DRIVE</span>
+
+        <button id="close-usb">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>USB Contents</h2>
+
+        <ul>
+
+            <li>invoice.pdf.exe</li>
+
+            <li>autorun.inf</li>
+
+            <li>secret.txt</li>
+
+        </ul>
+
+    </div>
+
+</div>
+<div id="photo-window">
+
+    <div class="window-header">
+
+        <span>SECURITY PHOTO</span>
+
+        <button id="close-photo">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>Camera Snapshot</h2>
+
+        <p>
+
+        CCTV captured an employee inserting an unknown USB drive.
+
+        </p>
+
+    </div>
+
+</div>
+<div id="note-window">
+
+    <div class="window-header">
+
+        <span>PASSWORD NOTE</span>
+
+        <button id="close-note">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>Password Hint</h2>
+
+        <p>
+
+        "My favourite programming language."
+
+        </p>
+
+    </div>
+
+</div>
+<!-- USB Window -->
+<div id="usb-window">
+
+    <div class="window-header">
+
+        <span>USB DRIVE</span>
+
+        <button id="close-usb">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>USB Contents</h2>
+
+        <hr>
+
+        <p>Recovered Files:</p>
+
+        <ul>
+
+            <li>invoice.pdf.exe</li>
+
+            <li>autorun.inf</li>
+
+            <li>README.txt</li>
+
+        </ul>
+
+        <br>
+
+        <p>
+
+            The executable disguised as a PDF appears to have infected the system.
+
+        </p>
+
+    </div>
+
+</div>
+<!-- Security Photo Window -->
+
+<div id="photo-window">
+
+    <div class="window-header">
+
+        <span>SECURITY PHOTO</span>
+
+        <button id="close-photo">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>CCTV Snapshot</h2>
+
+        <hr>
+
+        <div class="photo-box">
+
+            📷
+
+            <p><strong>08:34 AM</strong></p>
+
+            <p>
+                CCTV captured an employee inserting an unknown USB device
+                into the workstation.
+            </p>
+
+        </div>
+
+        <br>
+
+        <p>
+
+            Observation:
+            The USB insertion happened immediately before the malicious
+            executable was launched.
+
+        </p>
+
+    </div>
+
+</div>
+<div id="note-window">
+
+    <div class="window-header">
+
+        <span>PASSWORD NOTE</span>
+
+        <button id="close-note">X</button>
+
+    </div>
+
+    <div class="window-content">
+
+        <h2>Password Hint</h2>
+
+        <hr>
+
+        <p>
+
+        Sticky Note recovered from desk.
+
+        </p>
+
+        <br>
+
+        <h3>
+
+        "My favourite programming language."
+
+        </h3>
+
+        <br>
+
+        <p>
+
+        This clue may unlock the Password Vault.
+
+        </p>
+
+    </div>
+
+</div>
+    <script src="js/script.js"></script>
+
+</body>
+
+</html>
