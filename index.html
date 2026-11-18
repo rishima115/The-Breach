@@ -90,8 +90,6 @@
 
 </div>
 
-        </div>
-
         <div class="desktop-icons">
 
             <div class="icon" id="case-icon">
@@ -148,54 +146,14 @@
 
             </div>
 
-            resumeIcon.innerHTML=`
-        📄
-        <p>Resume.pdf</p>
-        `;
-        
-        resumeWindow.querySelector(".window-content").innerHTML=`
+            <div class="icon" id="siem-icon">📊<p>SIEM Analyzer</p></div>
+            <div class="icon" id="pcap-icon">🦈<p>PCAP Analyzer</p></div>
+            <div class="icon" id="base64-icon">🔤<p>Base64 Decoder</p></div>
+            <div class="icon" id="headers-icon">✉️<p>Email Header Triage</p></div>
+            <div class="icon" id="mitre-icon">🎯<p>MITRE ATT&CK</p></div>
+            <div class="icon" id="canvas-icon">✨<p>Canvas Lab</p></div>
 
-        <h2>Resume</h2>
-
-        <hr>
-
-        <h3>Rishima Sharma</h3>
-
-        <p>B.Tech Cyber Security & Digital Forensics</p>
-
-        <h3>Skills</h3>
-
-        <ul>
-
-        <li>Java</li>
-
-        <li>Python</li>
-
-        <li>C++</li>
-
-        <li>SQL</li>
-
-        <li>JavaScript</li>
-
-        <li>AWS</li>
-
-        <li>Cyber Security</li>
-
-        </ul>
-
-        <h3>Projects</h3>
-
-        <ul>
-
-        <li>The Breach</li>
-
-        <li>EncryptSafe</li>
-
-        <li>Packet Sniffer</li>
-
-        </ul>
-
-        `;        
+            <div class="icon" id="resume-icon">📄<p>Resume.pdf</p></div>
 
         </div>
 
@@ -617,79 +575,6 @@
     </div>
 
 </div>
-<div id="usb-window">
-
-    <div class="window-header">
-
-        <span>USB DRIVE</span>
-
-        <button id="close-usb">X</button>
-
-    </div>
-
-    <div class="window-content">
-
-        <h2>USB Contents</h2>
-
-        <ul>
-
-            <li>invoice.pdf.exe</li>
-
-            <li>autorun.inf</li>
-
-            <li>secret.txt</li>
-
-        </ul>
-
-    </div>
-
-</div>
-<div id="photo-window">
-
-    <div class="window-header">
-
-        <span>SECURITY PHOTO</span>
-
-        <button id="close-photo">X</button>
-
-    </div>
-
-    <div class="window-content">
-
-        <h2>Camera Snapshot</h2>
-
-        <p>
-
-        CCTV captured an employee inserting an unknown USB drive.
-
-        </p>
-
-    </div>
-
-</div>
-<div id="note-window">
-
-    <div class="window-header">
-
-        <span>PASSWORD NOTE</span>
-
-        <button id="close-note">X</button>
-
-    </div>
-
-    <div class="window-content">
-
-        <h2>Password Hint</h2>
-
-        <p>
-
-        "My favourite programming language."
-
-        </p>
-
-    </div>
-
-</div>
 <!-- USB Window -->
 <div id="usb-window">
 
@@ -815,6 +700,71 @@
     </div>
 
 </div>
+
+    <!-- SIEM / SQLi Analyzer -->
+    <section id="siem-window" class="tool-window">
+      <div class="window-header"><span>SIEM LOG ANALYZER</span><button data-close="siem-window">X</button></div>
+      <div class="window-content">
+        <p>Paste newline-delimited security events or load the included sample.</p>
+        <textarea id="siem-input" rows="8" spellcheck="false">2026-07-12T08:31:00Z user=alice event=login_success src=10.0.0.12
+2026-07-12T08:32:14Z user=unknown event=web_request src=203.0.113.44 query="id=1 UNION SELECT username,password FROM users"
+2026-07-12T08:33:02Z user=alice event=file_access src=10.0.0.12</textarea>
+        <button id="siem-analyze">Analyze Logs</button>
+        <div id="siem-results" class="tool-results" aria-live="polite">Analysis results will appear here.</div>
+      </div>
+    </section>
+
+    <!-- PCAP Analyzer -->
+    <section id="pcap-window" class="tool-window">
+      <div class="window-header"><span>PCAP / WIRESHARK ANALYZER</span><button data-close="pcap-window">X</button></div>
+      <div class="window-content">
+        <p>Load a .pcap capture. This browser parser supports classic PCAP files containing Ethernet, IPv4, TCP and UDP frames. PCAPNG is not supported.</p>
+        <input id="pcap-file" type="file" accept=".pcap,application/vnd.tcpdump.pcap">
+        <div id="pcap-results" class="tool-results" aria-live="polite">No capture loaded.</div>
+      </div>
+    </section>
+
+    <!-- Base64 Decoder -->
+    <section id="base64-window" class="tool-window">
+      <div class="window-header"><span>BASE64 DECODER</span><button data-close="base64-window">X</button></div>
+      <div class="window-content">
+        <label for="base64-input">Encoded text</label>
+        <textarea id="base64-input" rows="4" placeholder="Paste Base64 text here"></textarea>
+        <button id="base64-decode">Decode</button>
+        <div id="base64-result" class="tool-results" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Email Header Triage -->
+    <section id="headers-window" class="tool-window">
+      <div class="window-header"><span>SPF / DKIM / DMARC HEADER TRIAGE</span><button data-close="headers-window">X</button></div>
+      <div class="window-content">
+        <p>Paste the raw headers from a message. This extracts reported authentication results; it does not cryptographically verify signatures.</p>
+        <textarea id="headers-input" rows="9" spellcheck="false" placeholder="Authentication-Results: mx.example; spf=pass; dkim=pass; dmarc=pass"></textarea>
+        <button id="headers-analyze">Analyze Headers</button>
+        <div id="headers-results" class="tool-results" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- MITRE ATT&CK -->
+    <section id="mitre-window" class="tool-window">
+      <div class="window-header"><span>MITRE ATT&CK INVESTIGATION MAP</span><button data-close="mitre-window">X</button></div>
+      <div class="window-content">
+        <p>Technique mapping is based on the observed scenario and is a hypothesis for investigation, not proof of attribution.</p>
+        <div id="mitre-results" class="tool-results"></div>
+      </div>
+    </section>
+
+    <!-- Canvas API Lab -->
+    <section id="canvas-window" class="tool-window">
+      <div class="window-header"><span>CANVAS TELEMETRY LAB</span><button data-close="canvas-window">X</button></div>
+      <div class="window-content">
+        <p>Live Canvas API visualization of simulated network telemetry.</p>
+        <canvas id="telemetry-canvas" width="760" height="300" aria-label="Animated network telemetry"></canvas>
+        <button id="canvas-toggle">Pause Animation</button>
+      </div>
+    </section>
+
     <script src="js/script.js"></script>
 
 </body>

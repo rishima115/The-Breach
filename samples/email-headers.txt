@@ -1,0 +1,8 @@
+From: security@example.test
+To: analyst@example.test
+Subject: Example authentication header triage
+Authentication-Results: mx.example.test;
+    spf=pass smtp.mailfrom=example.test;
+    dkim=fail header.d=example.test;
+    dmarc=fail header.from=example.test
+Received-SPF: pass (mx.example.test: domain of example.test designates 192.0.2.10 as permitted sender)

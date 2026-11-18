@@ -1,0 +1,8 @@
+2026-07-12T08:31:00Z user=alice event=login_success src=10.0.0.12
+2026-07-12T08:32:14Z user=unknown event=web_request src=203.0.113.44 query="id=1 UNION SELECT username,password FROM users"
+2026-07-12T08:33:02Z user=alice event=file_access src=10.0.0.12
+2026-07-12T08:34:00Z user=alice event=usb_connected src=10.0.0.12
+2026-07-12T08:35:00Z process=powershell.exe event=process_start src=10.0.0.12
+2026-07-12T08:36:00Z file=invoice.pdf.exe event=process_execution src=10.0.0.12
+2026-07-12T08:37:00Z event=outbound_connection src=10.0.0.12 dst=203.0.113.80
+2026-07-12T08:39:00Z event=files_encrypted src=10.0.0.12

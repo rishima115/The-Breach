@@ -843,3 +843,262 @@ window.onload = function(){
     }
 
 };
+
+// ---------------------------------------------------------------------------
+// Defensive investigation tools added for portfolio demonstrations.
+// All analysis runs locally in the browser; no uploaded evidence is transmitted.
+// ---------------------------------------------------------------------------
+(function initializeInvestigationTools() {
+  const byId = (id) => document.getElementById(id);
+  const openWindow = (id) => { const el = byId(id); if (el) el.style.display = "block"; };
+
+  const toolLaunchers = {
+    "siem-icon": "siem-window",
+    "pcap-icon": "pcap-window",
+    "base64-icon": "base64-window",
+    "headers-icon": "headers-window",
+    "mitre-icon": "mitre-window",
+    "canvas-icon": "canvas-window"
+  };
+  Object.entries(toolLaunchers).forEach(([launcher, win]) => {
+    const el = byId(launcher);
+    if (el) el.addEventListener("click", () => openWindow(win));
+  });
+  document.querySelectorAll("[data-close]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = byId(button.dataset.close);
+      if (target) target.style.display = "none";
+    });
+  });
+
+  // SIEM: parse simple key=value events and flag suspicious SQLi indicators.
+  const sqliPatterns = [
+    { name: "UNION SELECT", regex: /\bunion\s+(?:all\s+)?select\b/i },
+    { name: "Boolean condition", regex: /(?:'|")\s*(?:or|and)\s+[\w'"]+\s*=\s*[\w'"]+/i },
+    { name: "Comment truncation", regex: /(?:--|#|\/\*)/ },
+    { name: "Time-delay function", regex: /\b(?:sleep|benchmark|pg_sleep)\s*\(/i },
+    { name: "Stacked statement", regex: /;\s*(?:select|insert|update|delete|drop)\b/i }
+  ];
+  const siemButton = byId("siem-analyze");
+  if (siemButton) siemButton.addEventListener("click", () => {
+    const raw = byId("siem-input").value.trim();
+    const lines = raw ? raw.split(/\r?\n/).filter(Boolean) : [];
+    const events = lines.map((line, index) => {
+      const fields = {};
+      for (const match of line.matchAll(/([\w.-]+)=("[^"]*"|'[^']*'|\S+)/g)) {
+        fields[match[1]] = match[2].replace(/^["']|["']$/g, "");
+      }
+      const findings = sqliPatterns.filter((p) => p.regex.test(line)).map((p) => p.name);
+      return { line, index: index + 1, fields, findings };
+    });
+    const flagged = events.filter((e) => e.findings.length);
+    const out = byId("siem-results");
+    out.replaceChildren();
+    const summary = document.createElement("p");
+    summary.textContent = `Parsed ${events.length} event(s); ${flagged.length} event(s) contain SQL injection indicators.`;
+    out.appendChild(summary);
+    events.forEach((event) => {
+      const row = document.createElement("div");
+      row.className = "result-row";
+      const title = document.createElement("strong");
+      title.textContent = `Event ${event.index}: ${event.findings.length ? "SUSPICIOUS" : "No matched indicator"}`;
+      const detail = document.createElement("p");
+      detail.textContent = event.findings.length
+        ? `Indicators: ${event.findings.join(", ")}`
+        : `event=${event.fields.event || "unknown"} | user=${event.fields.user || "unknown"} | src=${event.fields.src || "unknown"}`;
+      const code = document.createElement("code");
+      code.textContent = event.line;
+      row.append(title, detail, code);
+      out.appendChild(row);
+    });
+    renderMitre(events);
+  });
+
+  // Base64: decode UTF-8 safely, including non-ASCII characters.
+  const decodeButton = byId("base64-decode");
+  if (decodeButton) decodeButton.addEventListener("click", () => {
+    const input = byId("base64-input").value.trim();
+    const output = byId("base64-result");
+    try {
+      if (!input || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(input)) {
+        throw new Error("Input is empty or is not valid padded Base64.");
+      }
+      const binary = atob(input);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      output.textContent = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch (error) {
+      output.textContent = `Unable to decode: ${error.message}`;
+    }
+  });
+
+  // Header triage: extract reported SPF, DKIM and DMARC outcomes.
+  const headerButton = byId("headers-analyze");
+  if (headerButton) headerButton.addEventListener("click", () => {
+    const raw = byId("headers-input").value;
+    const unfolded = raw.replace(/\r?\n[ \t]+/g, " ");
+    const authLines = unfolded.split(/\r?\n/).filter((line) => /^(authentication-results|received-spf):/i.test(line));
+    const result = byId("headers-results");
+    result.replaceChildren();
+    if (!authLines.length) {
+      result.textContent = "No Authentication-Results or Received-SPF header was found. This does not mean the message passed authentication.";
+      return;
+    }
+    const combined = authLines.join(" ").toLowerCase();
+    ["spf", "dkim", "dmarc"].forEach((method) => {
+      const match = combined.match(new RegExp("\\b" + method + "\\s*=\\s*(pass|fail|softfail|neutral|none|temperror|permerror)", "i"));
+      const p = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = `${method.toUpperCase()}: `;
+      p.append(strong, document.createTextNode(match ? match[1].toUpperCase() : "Not reported"));
+      result.appendChild(p);
+    });
+    const note = document.createElement("p");
+    note.textContent = "Triage only: these are values asserted by the receiving mail system. Confirm the trusted Authentication-Results header and mail gateway context before treating them as authoritative.";
+    result.appendChild(note);
+  });
+
+  // Classic PCAP parser: Ethernet II -> IPv4 -> TCP/UDP. No payload reconstruction.
+  const pcapInput = byId("pcap-file");
+  if (pcapInput) pcapInput.addEventListener("change", async () => {
+    const file = pcapInput.files && pcapInput.files[0];
+    const output = byId("pcap-results");
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      const view = new DataView(buffer);
+      if (view.byteLength < 24) throw new Error("File is too small to be a classic PCAP capture.");
+      const magic = view.getUint32(0, false);
+      let little, nano = false;
+      if (magic === 0xa1b2c3d4) little = false;
+      else if (magic === 0xd4c3b2a1) little = true;
+      else if (magic === 0xa1b23c4d) { little = false; nano = true; }
+      else if (magic === 0x4d3cb2a1) { little = true; nano = true; }
+      else throw new Error("Unsupported capture format. Please provide a classic .pcap file (not PCAPNG).");
+      const linkType = view.getUint32(20, little);
+      if (linkType !== 1) throw new Error(`Unsupported link type ${linkType}; this parser expects Ethernet (link type 1).`);
+      let offset = 24, count = 0, ipv4 = 0, tcp = 0, udp = 0, other = 0;
+      const conversations = new Map(), sample = [];
+      while (offset + 16 <= view.byteLength) {
+        const inclLen = view.getUint32(offset + 8, little);
+        offset += 16;
+        if (inclLen > view.byteLength - offset) throw new Error("Capture ends in an incomplete packet record.");
+        if (inclLen < 14) { offset += inclLen; count++; other++; continue; }
+        let ipOffset = offset + 14;
+        let etherType = view.getUint16(offset + 12, false);
+        if (etherType === 0x8100 || etherType === 0x88a8) {
+          if (inclLen < 18) { offset += inclLen; continue; }
+          etherType = view.getUint16(offset + 16, false); ipOffset += 4;
+        }
+        count++;
+        if (etherType === 0x0800 && ipOffset + 20 <= offset + inclLen) {
+          const versionIhl = view.getUint8(ipOffset);
+          const ihl = (versionIhl & 15) * 4;
+          if ((versionIhl >> 4) === 4 && ihl >= 20 && ipOffset + ihl <= offset + inclLen) {
+            ipv4++;
+            const src = [1,2,3,4].map(i => view.getUint8(ipOffset + 12 + i - 1)).join(".");
+            const dst = [1,2,3,4].map(i => view.getUint8(ipOffset + 16 + i - 1)).join(".");
+            const proto = view.getUint8(ipOffset + 9);
+            let protocol = "Other", srcPort = "", dstPort = "";
+            if ((proto === 6 || proto === 17) && ipOffset + ihl + 4 <= offset + inclLen) {
+              srcPort = view.getUint16(ipOffset + ihl, false);
+              dstPort = view.getUint16(ipOffset + ihl + 2, false);
+              protocol = proto === 6 ? "TCP" : "UDP";
+              if (proto === 6) tcp++; else udp++;
+            } else other++;
+            const key = `${src}:${srcPort} → ${dst}:${dstPort} (${protocol})`;
+            conversations.set(key, (conversations.get(key) || 0) + 1);
+            if (sample.length < 12) sample.push(key);
+          } else other++;
+        } else other++;
+        offset += inclLen;
+      }
+      output.replaceChildren();
+      const summary = document.createElement("p");
+      summary.textContent = `File: ${file.name} | Packets: ${count} | IPv4: ${ipv4} | TCP: ${tcp} | UDP: ${udp} | Other/non-IPv4: ${other} | Timestamp precision: ${nano ? "nanoseconds" : "microseconds"}`;
+      output.appendChild(summary);
+      const heading = document.createElement("h3"); heading.textContent = "Observed conversations"; output.appendChild(heading);
+      const list = document.createElement("ul");
+      [...conversations.entries()].sort((a,b) => b[1]-a[1]).slice(0,30).forEach(([flow, packets]) => {
+        const li = document.createElement("li"); li.textContent = `${flow} — ${packets} packet(s)`; list.appendChild(li);
+      });
+      output.appendChild(list);
+      const caveat = document.createElement("p"); caveat.textContent = "Metadata parser only: it does not reassemble TCP streams, decrypt traffic, decode application protocols, or replace Wireshark."; output.appendChild(caveat);
+    } catch (error) {
+      output.textContent = `PCAP analysis failed: ${error.message}`;
+    }
+  });
+
+  // MITRE ATT&CK mapping from evidence indicators. This is transparent rule-based mapping.
+  function renderMitre(events = []) {
+    const corpus = events.map(e => e.line).join("\n").toLowerCase();
+    const rules = [
+      { id: "T1091", name: "Replication Through Removable Media", tactic: "Initial Access", why: "USB/removable-media event in the incident evidence." , test: /usb|removable media/ },
+      { id: "T1059.001", name: "PowerShell", tactic: "Execution", why: "PowerShell process execution is present in the incident evidence.", test: /powershell/ },
+      { id: "T1204.002", name: "Malicious File", tactic: "Execution", why: "A suspicious executable disguised as a document is referenced.", test: /invoice\.pdf\.exe|malicious file/ },
+      { id: "T1071.001", name: "Web Protocols", tactic: "Command and Control", why: "Outbound web-like communication is indicated; protocol confirmation is needed.", test: /outbound connection|http|https/ },
+      { id: "T1486", name: "Data Encrypted for Impact", tactic: "Impact", why: "The evidence reports files being encrypted.", test: /files encrypted|file encryption/ },
+      { id: "T1190", name: "Exploit Public-Facing Application", tactic: "Initial Access", why: "SQL injection indicators may be relevant to exploitation of a public-facing application.", test: /union\s+(?:all\s+)?select|sleep\s*\(|benchmark\s*\(/ }
+    ];
+    const matches = rules.filter(rule => rule.test.test(corpus) || (events.length === 0 && /usb|powershell|invoice\.pdf\.exe|outbound connection|files encrypted/i.test(document.body.innerText) && rule.id !== "T1190"));
+    const target = byId("mitre-results");
+    if (!target) return;
+    target.replaceChildren();
+    (matches.length ? matches : rules.slice(0, 5)).forEach(rule => {
+      const card = document.createElement("div"); card.className = "result-row";
+      const title = document.createElement("strong"); title.textContent = `${rule.id} — ${rule.name}`;
+      const meta = document.createElement("p"); meta.textContent = `Tactic: ${rule.tactic}`;
+      const why = document.createElement("p"); why.textContent = rule.why;
+      card.append(title, meta, why); target.appendChild(card);
+    });
+    const disclaimer = document.createElement("p"); disclaimer.textContent = "Mappings are analyst hypotheses based on available indicators. Validate each technique against full telemetry and the current MITRE ATT&CK knowledge base."; target.appendChild(disclaimer);
+  }
+  renderMitre();
+
+  // Canvas API animation: animated telemetry traces and nodes.
+  const canvas = byId("telemetry-canvas");
+  const toggle = byId("canvas-toggle");
+  if (canvas && canvas.getContext) {
+    const ctx = canvas.getContext("2d");
+    let running = false, frame = 0, raf = 0;
+    const nodes = [{x:75,y:150},{x:260,y:65},{x:260,y:235},{x:475,y:150},{x:680,y:150}];
+    const edges = [[0,1],[0,2],[1,3],[2,3],[3,4]];
+    function draw() {
+      if (!running) return;
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = "#050805"; ctx.fillRect(0,0,w,h);
+      ctx.strokeStyle = "rgba(0,255,80,.45)"; ctx.lineWidth = 2;
+      edges.forEach(([a,b]) => { ctx.beginPath(); ctx.moveTo(nodes[a].x,nodes[a].y); ctx.lineTo(nodes[b].x,nodes[b].y); ctx.stroke(); });
+      edges.forEach(([a,b], i) => {
+        const t = ((frame * 0.008 + i * 0.21) % 1);
+        const x = nodes[a].x + (nodes[b].x-nodes[a].x)*t;
+        const y = nodes[a].y + (nodes[b].y-nodes[a].y)*t;
+        ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle = "#b6ff00"; ctx.fill();
+      });
+      nodes.forEach((node,i) => {
+        ctx.beginPath(); ctx.arc(node.x,node.y, i===4 ? 19 : 15,0,Math.PI*2);
+        ctx.fillStyle = i===4 ? "#5b1717" : "#12351c"; ctx.fill();
+        ctx.strokeStyle = i===4 ? "#ff5555" : "#00ff66"; ctx.stroke();
+        ctx.fillStyle = "#eaffea"; ctx.font = "13px Arial"; ctx.textAlign = "center";
+        ctx.fillText(["Firewall","Workstation","File Server","Gateway","External"][i],node.x,node.y+34);
+      });
+      frame++; raf = requestAnimationFrame(draw);
+    }
+    if (toggle) toggle.textContent = "Start Animation";
+    const canvasLauncher = byId("canvas-icon");
+    if (canvasLauncher) canvasLauncher.addEventListener("click", () => {
+      if (!running) {
+        running = true;
+        if (toggle) toggle.textContent = "Pause Animation";
+        draw();
+      }
+    });
+    if (toggle) toggle.addEventListener("click", () => {
+      running = !running;
+      toggle.textContent = running ? "Pause Animation" : "Resume Animation";
+      if (running) draw(); else { cancelAnimationFrame(raf); raf = 0; }
+    });
+    const canvasWin = byId("canvas-window");
+    if (canvasWin) canvasWin.addEventListener("click", () => { if (running && !raf) draw(); });
+  }
+})();
